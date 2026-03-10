@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Race Night</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root { --white:#fff; --purple:#9B59F5; --dark:#0A0E1A; --mid:#141929; }
+  html,body { height:100%; width:100%; background:var(--dark); font-family:'Inter',sans-serif; color:#fff; overflow:hidden; user-select:none; }
+  #app { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+
+  /* SELECT */
+  #screen-select { display:flex; flex-direction:column; align-items:center; gap:24px; width:100%; text-align:center; }
+  .headline { font-family:'Bebas Neue',sans-serif; font-size:44px; letter-spacing:2px; line-height:1; }
+  .sub { color:rgba(255,255,255,0.4); font-size:13px; letter-spacing:2px; text-transform:uppercase; }
+  .bowl-btn { width:100%; padding:34px 24px; border-radius:20px; border:2px solid; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:38px; letter-spacing:2px; transition:transform 0.1s; display:flex; flex-direction:column; align-items:center; gap:4px; outline:none; background:transparent; }
+  .bowl-btn:active { transform:scale(0.96); }
+  .bowl-btn .blabel { font-size:12px; font-family:'Inter',sans-serif; font-weight:700; letter-spacing:3px; text-transform:uppercase; opacity:0.6; margin-bottom:4px; }
+  .bowl-btn.upper { border-color:rgba(255,255,255,0.4); color:#fff; box-shadow:0 0 30px rgba(255,255,255,0.08); }
+  .bowl-btn.lower { border-color:rgba(155,89,245,0.6); color:var(--purple); box-shadow:0 0 30px rgba(155,89,245,0.15); }
+
+  /* WAITING */
+  #screen-waiting { display:none; flex-direction:column; align-items:center; gap:20px; text-align:center; }
+  .wait-badge { width:110px; height:110px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; line-height:1.3; }
+  .wait-badge.upper { background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.25); color:#fff; }
+  .wait-badge.lower { background:rgba(155,89,245,0.12); border:2px solid rgba(155,89,245,0.4); color:var(--purple); }
+  .wait-title { font-family:'Bebas Neue',sans-serif; font-size:30px; letter-spacing:2px; }
+  .wait-sub { font-size:13px; color:rgba(255,255,255,0.35); letter-spacing:1px; }
+  .dots span { display:inline-block; animation:bounce 1.2s infinite; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.3); margin:0 3px; vertical-align:middle; }
+  .dots span:nth-child(2){animation-delay:.2s} .dots span:nth-child(3){animation-delay:.4s}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+  /* RACE */
+  #screen-race { display:none; flex-direction:column; align-items:center; gap:0; width:100%; height:100%; }
+  .race-header { width:100%; display:flex; justify-content:space-between; align-items:center; padding:16px 0 12px; }
+  .score-block { text-align:center; flex:1; }
+  .score-lbl { font-size:11px; letter-spacing:2px; text-transform:uppercase; opacity:0.45; margin-bottom:2px; }
+  .score-val { font-family:'Bebas Neue',sans-serif; font-size:44px; line-height:1; }
+  .score-val.w { color:#fff; } .score-val.p { color:var(--purple); }
+  .vs { font-family:'Bebas Neue',sans-serif; font-size:16px; opacity:0.25; }
+  .prog-wrap { width:100%; padding-bottom:18px; }
+  .prog-track { height:9px; background:rgba(255,255,255,0.06); border-radius:8px; overflow:hidden; margin-bottom:8px; }
+  .prog-bar { height:100%; border-radius:8px; transition:width .3s ease; }
+  .prog-bar.w { background:linear-gradient(90deg,rgba(255,255,255,.3),#fff); }
+  .prog-bar.p { background:linear-gradient(90deg,rgba(155,89,245,.5),var(--purple)); }
+  .tap-area { flex:1; width:100%; display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
+  .tap-btn { width:200px; height:200px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; border:3px solid; font-family:'Bebas Neue',sans-serif; font-size:50px; letter-spacing:3px; position:relative; transition:transform .08s; }
+  .tap-btn:active,.tap-btn.pressed{transform:scale(0.91);}
+  .tap-btn.upper { border-color:rgba(255,255,255,0.35); background:radial-gradient(circle,rgba(255,255,255,0.1),rgba(255,255,255,0.02)); color:#fff; box-shadow:0 0 60px rgba(255,255,255,0.1); }
+  .tap-btn.lower { border-color:rgba(155,89,245,0.55); background:radial-gradient(circle,rgba(155,89,245,0.18),rgba(155,89,245,0.04)); color:var(--purple); box-shadow:0 0 60px rgba(155,89,245,0.22); }
+  .tap-sub { font-size:11px; font-family:'Inter',sans-serif; letter-spacing:2px; opacity:0.5; }
+  .ripple { position:absolute; border-radius:50%; width:200px; height:200px; border:2px solid currentColor; animation:ripple-out .6s ease-out forwards; pointer-events:none; }
+  @keyframes ripple-out{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.3);opacity:0}}
+  .float-plus { position:absolute; top:-30px; font-family:'Bebas Neue',sans-serif; font-size:28px; animation:float-up .8s ease-out forwards; pointer-events:none; }
+  @keyframes float-up{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-50px)}}
+
+  /* RESULT */
+  #screen-result { display:none; flex-direction:column; align-items:center; gap:22px; text-align:center; }
+  .res-icon { font-size:70px; }
+  .res-title { font-family:'Bebas Neue',sans-serif; font-size:52px; letter-spacing:3px; line-height:1; }
+  .res-sub { font-size:14px; color:rgba(255,255,255,0.45); letter-spacing:1px; }
+  .res-scores { display:flex; gap:36px; }
+  .rsc { text-align:center; }
+  .rsc-lbl { font-size:11px; letter-spacing:2px; opacity:0.4; text-transform:uppercase; }
+  .rsc-val { font-family:'Bebas Neue',sans-serif; font-size:46px; }
+
+  /* OFFLINE */
+  #conn-bar { position:fixed; bottom:0; left:0; right:0; padding:10px; text-align:center; font-size:11px; letter-spacing:1px; background:rgba(231,76,60,0.9); display:none; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="screen-select">
+    <div>
+      <div class="headline">RACE NIGHT</div>
+      <div class="sub" style="margin-top:6px">Pick your bowl</div>
+    </div>
+    <button class="bowl-btn upper" onclick="selectBowl('upper')">
+      <div class="blabel">Team</div>WHITE
+    </button>
+    <button class="bowl-btn lower" onclick="selectBowl('lower')">
+      <div class="blabel">Team</div>PURPLE
+    </button>
+    <div style="font-size:12px;color:rgba(255,255,255,0.25)">Select your section to join</div>
+  </div>
+
+  <div id="screen-waiting">
+    <div id="wait-badge" class="wait-badge upper">TEAM<br>WHITE</div>
+    <div class="wait-title">YOU'RE IN!</div>
+    <div class="wait-sub">Race starting soon</div>
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.2);margin-top:12px">Get ready to tap!</div>
+  </div>
+
+  <div id="screen-race">
+    <div class="race-header">
+      <div class="score-block"><div class="score-lbl">White</div><div class="score-val w" id="su">0</div></div>
+      <div class="vs">VS</div>
+      <div class="score-block"><div class="score-lbl">Purple</div><div class="score-val p" id="sl">0</div></div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-track"><div class="prog-bar w" id="pu" style="width:0%"></div></div>
+      <div class="prog-track"><div class="prog-bar p" id="pl" style="width:0%"></div></div>
+    </div>
+    <div class="tap-area" id="tap-area">
+      <div class="tap-btn upper" id="tap-btn">TAP<div class="tap-sub">AS FAST AS YOU CAN</div></div>
+    </div>
+  </div>
+
+  <div id="screen-result">
+    <div class="res-icon" id="res-icon">🏆</div>
+    <div class="res-title" id="res-title">WHITE WINS!</div>
+    <div class="res-sub" id="res-sub">Thanks for racing!</div>
+    <div class="res-scores">
+      <div class="rsc"><div class="rsc-lbl">White</div><div class="rsc-val" id="fw" style="color:#fff">0</div></div>
+      <div class="rsc"><div class="rsc-lbl">Purple</div><div class="rsc-val" id="fp" style="color:var(--purple)">0</div></div>
+    </div>
+  </div>
+</div>
+<div id="conn-bar">⚠ Reconnecting...</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let myBowl = null;
+let gameActive = false;
+let lastGameId = null;
+
+// Conn status
+socket.on('connect', () => { document.getElementById('conn-bar').style.display = 'none'; });
+socket.on('disconnect', () => { document.getElementById('conn-bar').style.display = 'block'; });
+
+function show(id) {
+  ['screen-select','screen-waiting','screen-race','screen-result'].forEach(s => {
+    document.getElementById(s).style.display = 'none';
+  });
+  document.getElementById(id).style.display = 'flex';
+}
+
+function selectBowl(bowl) {
+  myBowl = bowl;
+  const b = document.getElementById('wait-badge');
+  b.className = 'wait-badge ' + bowl;
+  b.innerHTML = bowl === 'upper' ? 'TEAM<br>WHITE' : 'TEAM<br>PURPLE';
+  show('screen-waiting');
+}
+
+socket.on('state', (state) => {
+  if (state.active) {
+    if (state.game_id !== lastGameId) {
+      lastGameId = state.game_id;
+      gameActive = true;
+      if (myBowl) {
+        const btn = document.getElementById('tap-btn');
+        btn.className = 'tap-btn ' + myBowl;
+        btn.innerHTML = 'TAP<div class="tap-sub">AS FAST AS YOU CAN</div>';
+        show('screen-race');
+      }
+    }
+    updateProgress(state);
+  }
+
+  if (!state.active && state.ended && gameActive) {
+    gameActive = false;
+    showResult(state);
+  }
+
+  if (!state.active && !state.ended) {
+    gameActive = false;
+  }
+});
+
+function updateProgress(state) {
+  const u = state.upper_taps || 0, l = state.lower_taps || 0;
+  const total = u + l || 1;
+  document.getElementById('su').textContent = u;
+  document.getElementById('sl').textContent = l;
+  document.getElementById('pu').style.width = Math.round(u/total*100) + '%';
+  document.getElementById('pl').style.width = Math.round(l/total*100) + '%';
+}
+
+function showResult(state) {
+  const u = state.upper_taps || 0, l = state.lower_taps || 0;
+  const won = myBowl === 'upper' ? u >= l : l >= u;
+  const draw = u === l;
+  document.getElementById('res-icon').textContent = draw ? '🤝' : won ? '🏆' : '👏';
+  document.getElementById('res-title').textContent = draw ? "IT'S A DRAW!" : won ? 'YOUR TEAM WINS!' : (myBowl === 'upper' ? 'PURPLE WINS' : 'WHITE WINS');
+  document.getElementById('res-sub').textContent = draw ? 'What a race!' : won ? 'Amazing — you helped win!' : 'Great race!';
+  document.getElementById('fw').textContent = u;
+  document.getElementById('fp').textContent = l;
+  show('screen-result');
+}
+
+// Tap handling
+function handleTap() {
+  if (!gameActive || !myBowl) return;
+  socket.emit('tap', { bowl: myBowl });
+
+  const btn = document.getElementById('tap-btn');
+  btn.classList.add('pressed');
+  setTimeout(() => btn.classList.remove('pressed'), 80);
+
+  const ripple = document.createElement('div');
+  ripple.className = 'ripple';
+  ripple.style.color = myBowl === 'upper' ? '#fff' : '#9B59F5';
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+
+  const fl = document.createElement('div');
+  fl.className = 'float-plus';
+  fl.textContent = '+1';
+  fl.style.color = myBowl === 'upper' ? '#fff' : '#9B59F5';
+  document.getElementById('tap-area').appendChild(fl);
+  setTimeout(() => fl.remove(), 800);
+}
+
+document.getElementById('tap-area').addEventListener('touchstart', e => { e.preventDefault(); handleTap(); }, { passive: false });
+document.getElementById('tap-area').addEventListener('click', handleTap);
+</script>
+</body>
+</html>

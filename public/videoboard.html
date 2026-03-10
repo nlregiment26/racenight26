@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Race Night – Videoboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root { --white:#fff; --purple:#9B59F5; --bg:#040710; --ice:#7EC8E3; }
+  html,body { width:100%; height:100%; background:var(--bg); overflow:hidden; font-family:'Inter',sans-serif; color:#fff; }
+
+  canvas#bgc { position:fixed; inset:0; z-index:0; pointer-events:none; }
+
+  .screen { position:fixed; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:opacity .5s; }
+  .screen.hidden { opacity:0; pointer-events:none; }
+
+  /* IDLE */
+  #sc-idle { gap:18px; text-align:center; }
+  .idle-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(80px,11vw,150px); letter-spacing:8px; line-height:1; }
+  .idle-sub { font-size:clamp(16px,2.2vw,26px); letter-spacing:6px; color:rgba(255,255,255,0.3); font-weight:700; text-transform:uppercase; }
+  .idle-teams { display:flex; gap:70px; margin-top:18px; }
+  .idle-team { display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .team-dot { width:18px; height:18px; border-radius:50%; }
+  .team-nm { font-family:'Bebas Neue',sans-serif; font-size:34px; letter-spacing:4px; }
+  .team-bowl { font-size:12px; letter-spacing:3px; opacity:0.35; text-transform:uppercase; font-weight:700; }
+  .scan-cta { margin-top:36px; font-size:clamp(16px,2vw,22px); letter-spacing:3px; color:rgba(255,255,255,0.25); font-weight:700; animation:breathe 2.5s ease-in-out infinite; }
+  @keyframes breathe{0%,100%{opacity:.25}50%{opacity:.65}}
+
+  /* RACE */
+  #sc-race { padding:0 6%; justify-content:center; gap:0; }
+  .race-top { display:flex; justify-content:space-between; align-items:flex-end; width:100%; padding-bottom:24px; }
+  .team-block { display:flex; flex-direction:column; }
+  .team-block.right { align-items:flex-end; }
+  .t-lbl { font-size:clamp(12px,1.4vw,16px); letter-spacing:4px; text-transform:uppercase; font-weight:700; opacity:0.35; margin-bottom:4px; }
+  .t-name { font-family:'Bebas Neue',sans-serif; font-size:clamp(52px,7vw,100px); letter-spacing:4px; line-height:1; }
+  .t-score { font-family:'Bebas Neue',sans-serif; font-size:clamp(70px,10vw,140px); line-height:1; }
+  .t-score.w { color:#fff; text-shadow:0 0 50px rgba(255,255,255,0.35); }
+  .t-score.p { color:var(--purple); text-shadow:0 0 50px rgba(155,89,245,0.5); }
+  .center { text-align:center; }
+  .vs { font-family:'Bebas Neue',sans-serif; font-size:clamp(24px,3.5vw,48px); opacity:0.2; }
+  .timer { font-family:'Bebas Neue',sans-serif; font-size:clamp(54px,8vw,110px); line-height:1; color:var(--ice); }
+  .timer.hot { color:#E74C3C; animation:tp 1s infinite; }
+  @keyframes tp{0%,100%{opacity:1}50%{opacity:.55}}
+  .t-lbl2 { font-size:13px; letter-spacing:4px; opacity:0.3; text-transform:uppercase; font-weight:700; }
+
+  .tracks { width:100%; position:relative; }
+  .track-row { position:relative; height:clamp(68px,9.5vh,96px); margin-bottom:14px; }
+  .track-row:last-child { margin-bottom:0; }
+  .track-bg { position:absolute; inset:0; border-radius:999px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); overflow:hidden; }
+  .track-fill { position:absolute; top:0; left:0; bottom:0; border-radius:999px; transition:width .35s cubic-bezier(.25,1,.5,1); min-width:5%; }
+  .tf-w { background:linear-gradient(90deg,rgba(255,255,255,0.12),rgba(255,255,255,0.85)); box-shadow:0 0 28px rgba(255,255,255,0.25); }
+  .tf-p { background:linear-gradient(90deg,rgba(155,89,245,0.18),var(--purple)); box-shadow:0 0 28px rgba(155,89,245,0.45); }
+  .ball { position:absolute; top:50%; transform:translateY(-50%); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:1px; transition:left .35s cubic-bezier(.25,1,.5,1); z-index:2; }
+  .ball-w { width:clamp(58px,8vh,86px); height:clamp(58px,8vh,86px); background:radial-gradient(circle at 35% 35%,#fff,#b0c4d8); box-shadow:0 4px 28px rgba(255,255,255,0.35),inset 0 -4px 10px rgba(0,0,0,0.2); color:#1a2040; }
+  .ball-p { width:clamp(58px,8vh,86px); height:clamp(58px,8vh,86px); background:radial-gradient(circle at 35% 35%,#c084fc,var(--purple)); box-shadow:0 4px 28px rgba(155,89,245,0.55),inset 0 -4px 10px rgba(0,0,0,0.25); color:#fff; }
+  .t-tag { position:absolute; right:18px; top:50%; transform:translateY(-50%); font-size:11px; letter-spacing:3px; font-weight:700; text-transform:uppercase; opacity:0.2; }
+
+  /* RESULT */
+  #sc-result { gap:22px; text-align:center; }
+  .res-winner { font-family:'Bebas Neue',sans-serif; font-size:clamp(88px,14vw,190px); letter-spacing:6px; line-height:1; animation:pop .8s cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+  .res-sub { font-size:clamp(18px,2.5vw,32px); letter-spacing:6px; opacity:0.35; font-weight:700; text-transform:uppercase; }
+  .res-scores { display:flex; gap:70px; margin-top:18px; }
+  .rsc { text-align:center; }
+  .rsc-n { font-family:'Bebas Neue',sans-serif; font-size:clamp(58px,9vw,120px); }
+  .rsc-l { font-size:13px; letter-spacing:4px; opacity:0.35; text-transform:uppercase; font-weight:700; }
+
+  .confetto { position:fixed; pointer-events:none; z-index:100; border-radius:2px; animation:cfall linear forwards; }
+  @keyframes cfall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+<canvas id="bgc"></canvas>
+
+<!-- IDLE -->
+<div class="screen" id="sc-idle">
+  <div class="idle-title">RACE NIGHT</div>
+  <div class="idle-sub">Fan Tap Challenge</div>
+  <div class="idle-teams">
+    <div class="idle-team">
+      <div class="team-dot" style="background:#fff;box-shadow:0 0 18px rgba(255,255,255,0.5)"></div>
+      <div class="team-nm" style="color:#fff">WHITE</div>
+      <div class="team-bowl">Upper Bowl</div>
+    </div>
+    <div class="idle-team">
+      <div class="team-dot" style="background:var(--purple);box-shadow:0 0 18px rgba(155,89,245,0.7)"></div>
+      <div class="team-nm" style="color:var(--purple)">PURPLE</div>
+      <div class="team-bowl">Lower Bowl</div>
+    </div>
+  </div>
+  <div class="scan-cta">SCAN QR CODE TO JOIN · TAP YOUR WAY TO VICTORY</div>
+</div>
+
+<!-- RACE -->
+<div class="screen hidden" id="sc-race">
+  <div class="race-top">
+    <div class="team-block">
+      <div class="t-lbl">Upper Bowl</div>
+      <div class="t-name" style="color:#fff">WHITE</div>
+      <div class="t-score w" id="sw">0</div>
+    </div>
+    <div class="center">
+      <div class="vs">VS</div>
+      <div class="timer" id="vtimer">—</div>
+      <div class="t-lbl2">SECONDS</div>
+    </div>
+    <div class="team-block right">
+      <div class="t-lbl">Lower Bowl</div>
+      <div class="t-name" style="color:var(--purple)">PURPLE</div>
+      <div class="t-score p" id="sp">0</div>
+    </div>
+  </div>
+  <div class="tracks">
+    <div class="track-row">
+      <div class="track-bg"><div class="track-fill tf-w" id="tw" style="width:5%"></div></div>
+      <div class="ball ball-w" id="bw" style="left:3%">W</div>
+      <div class="t-tag" style="color:#fff">WHITE</div>
+    </div>
+    <div class="track-row">
+      <div class="track-bg"><div class="track-fill tf-p" id="tp" style="width:5%"></div></div>
+      <div class="ball ball-p" id="bp" style="left:3%">P</div>
+      <div class="t-tag" style="color:var(--purple)">PURPLE</div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="screen hidden" id="sc-result">
+  <div class="res-winner" id="rw">WHITE WINS!</div>
+  <div class="res-sub" id="rs">Upper Bowl takes it!</div>
+  <div class="res-scores">
+    <div class="rsc"><div class="rsc-n" id="rn-w" style="color:#fff">0</div><div class="rsc-l">White · Taps</div></div>
+    <div class="rsc"><div class="rsc-n" id="rn-p" style="color:var(--purple)">0</div><div class="rsc-l">Purple · Taps</div></div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// BG particles
+const canvas = document.getElementById('bgc');
+const ctx = canvas.getContext('2d');
+let W, H, pts = [];
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+resize(); window.addEventListener('resize', resize);
+for (let i=0;i<80;i++) pts.push({x:Math.random()*2000,y:Math.random()*1200,r:Math.random()*1.4+.3,vx:(Math.random()-.5)*.18,vy:(Math.random()-.5)*.18,a:Math.random()*.35+.08,c:Math.random()>.5?'155,89,245':'126,200,227'});
+(function draw(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(${p.c},${p.a})`;ctx.fill();});requestAnimationFrame(draw);})();
+
+// State
+const socket = io();
+let cur = 'idle';
+let localTimer = null;
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('sc-'+id).classList.remove('hidden');
+  cur = id;
+}
+
+socket.on('state', (state) => {
+  if (state.active) {
+    if (cur !== 'race') {
+      show('race');
+      const elapsed = (Date.now() - state.started_at) / 1000;
+      startTimer(Math.max(0, state.duration - elapsed));
+    }
+    updateTracks(state.upper_taps||0, state.lower_taps||0);
+  } else if (state.ended && cur === 'race') {
+    clearInterval(localTimer);
+    showResult(state.upper_taps||0, state.lower_taps||0);
+  } else if (!state.active && !state.ended && cur !== 'idle') {
+    clearInterval(localTimer);
+    show('idle');
+  }
+});
+
+function startTimer(remaining) {
+  clearInterval(localTimer);
+  let r = Math.round(remaining);
+  setTimerDisplay(r);
+  localTimer = setInterval(() => {
+    r--;
+    setTimerDisplay(Math.max(0,r));
+    if (r <= 0) clearInterval(localTimer);
+  }, 1000);
+}
+
+function setTimerDisplay(s) {
+  const el = document.getElementById('vtimer');
+  el.textContent = s;
+  el.className = 'timer' + (s <= 10 && s > 0 ? ' hot' : '');
+}
+
+function updateTracks(u, l) {
+  const total = Math.max(u+l, 1);
+  const max = 88;
+  const pw = Math.max(5, Math.round(u/total*max));
+  const pp = Math.max(5, Math.round(l/total*max));
+
+  document.getElementById('tw').style.width = pw + '%';
+  document.getElementById('tp').style.width = pp + '%';
+  document.getElementById('sw').textContent = u;
+  document.getElementById('sp').textContent = l;
+
+  const trackW = document.querySelector('.track-row').offsetWidth;
+  const bSize = document.getElementById('bw').offsetWidth;
+  document.getElementById('bw').style.left = Math.max(0, pw/100*trackW - bSize/2) + 'px';
+  document.getElementById('bp').style.left = Math.max(0, pp/100*trackW - bSize/2) + 'px';
+}
+
+function showResult(u, l) {
+  const draw = u===l, ww = u>l;
+  document.getElementById('rw').textContent = draw ? "IT'S A DRAW!" : ww ? 'WHITE WINS!' : 'PURPLE WINS!';
+  document.getElementById('rw').style.color = draw ? '#fff' : ww ? '#fff' : 'var(--purple)';
+  document.getElementById('rs').textContent = draw ? 'What an incredible race!' : ww ? 'Upper Bowl takes it!' : 'Lower Bowl takes it!';
+  document.getElementById('rn-w').textContent = u;
+  document.getElementById('rn-p').textContent = l;
+  show('result');
+  if (!draw) confetti(ww ? '#ffffff' : '#9B59F5');
+}
+
+function confetti(col) {
+  const cols = [col,'#FFD700','#FF6B6B','#4ECDC4','#fff'];
+  for (let i=0;i<140;i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetto';
+      const w = 6+Math.random()*10, h = 10+Math.random()*14;
+      el.style.cssText = `left:${Math.random()*100}vw;width:${w}px;height:${h}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*.5}s;`;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),4000);
+    }, Math.random()*600);
+  }
+}
+</script>
+</body>
+</html>
