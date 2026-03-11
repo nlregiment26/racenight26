@@ -137,10 +137,8 @@
   <div class="card-lbl">Game Controls</div>
   <div class="config-row">
     <div class="cfg-lbl">Duration</div>
-    <button class="cfg-btn" onclick="setDur(180,this)">3 min</button>
-    <button class="cfg-btn on" id="dur-300" onclick="setDur(300,this)">5 min</button>
-    <button class="cfg-btn" onclick="setDur(420,this)">7 min</button>
-    <button class="cfg-btn" onclick="setDur(600,this)">10 min</button>
+    <button class="cfg-btn" onclick="setDur(30,this)">30s</button>
+    <button class="cfg-btn on" id="dur-60" onclick="setDur(60,this)">60s</button>
   </div>
   <div class="config-row">
     <div class="cfg-lbl">Taps/Lap</div>
@@ -167,7 +165,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
-let duration = 300, tapsPerLap = 200, timerInt = null, gameActive = false;
+let duration = 60, tapsPerLap = 200, timerInt = null, gameActive = false;
 
 document.getElementById('fan-url').textContent = window.location.origin + '/';
 

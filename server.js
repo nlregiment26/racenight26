@@ -12,7 +12,7 @@ const LAPS_TO_WIN = 3;
 
 let state = {
   active: false, ended: false, game_id: null,
-  duration: 300, taps_per_lap: 200,
+  duration: 60, taps_per_lap: 200,
   started_at: null, upper_taps: 0, lower_taps: 0,
   upper_players: 0, lower_players: 0,
   winner: null,  // 'upper' | 'lower' | 'tie' | null
@@ -70,7 +70,7 @@ io.on('connection', (socket) => {
     clearTimeout(gameTimer);
     state = { ...state, active: true, ended: false, game_id: 'game_' + Date.now(),
       winner: null,
-      duration: duration || 300, taps_per_lap: taps_per_lap || 200,
+      duration: duration || 60, taps_per_lap: taps_per_lap || 200,
       started_at: Date.now(), upper_taps: 0, lower_taps: 0 };
     broadcast();
     console.log(`[START] ${state.game_id} | ${state.duration}s | ${state.taps_per_lap} taps/lap`);
