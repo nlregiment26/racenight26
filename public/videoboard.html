@@ -82,7 +82,7 @@
   .timer-lbl { font-family:'Barlow Condensed',sans-serif; font-size:clamp(8px,0.9vw,11px); letter-spacing:4px; text-transform:uppercase; color:rgba(224,208,166,0.25); font-weight:700; }
 
   /* ── RINK CANVAS ── */
-  .track-section { width:100%; flex:1; min-height:0; display:flex; align-items:stretch; justify-content:center; }
+  .track-section { width:100%; flex:1; min-height:0; position:relative; display:flex; align-items:stretch; justify-content:center; }
   #track-canvas { width:100%; height:100%; display:block; }
 
   /* ── RESULT ── */
@@ -100,6 +100,43 @@
 
   .confetto { position:fixed; pointer-events:none; z-index:100; border-radius:2px; animation:cfall linear forwards; }
   @keyframes cfall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+  /* ── QR CODE ── */
+  /* Idle: large centred QR with label */
+  .idle-qr-wrap {
+    display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:18px;
+  }
+  .idle-qr {
+    width:clamp(120px,18vh,200px);
+    border-radius:10px;
+    padding:10px; background:#fff;
+    box-shadow:0 0 40px rgba(138,36,50,0.45);
+    animation:qrpulse 3s ease-in-out infinite;
+  }
+  @keyframes qrpulse{0%,100%{box-shadow:0 0 28px rgba(138,36,50,.35)}50%{box-shadow:0 0 55px rgba(138,36,50,.7)}}
+  .idle-qr-lbl {
+    font-family:'Barlow Condensed',sans-serif; font-weight:700;
+    font-size:clamp(11px,1.4vw,16px); letter-spacing:5px; text-transform:uppercase;
+    color:rgba(224,208,166,0.5);
+  }
+
+  /* Race: small QR pinned to bottom-right corner */
+  .race-qr-corner {
+    position:absolute; bottom:14px; right:18px; z-index:20;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    opacity:0.75; transition:opacity .3s;
+  }
+  .race-qr-corner:hover { opacity:1; }
+  .race-qr-corner img {
+    width:clamp(60px,8vh,100px);
+    border-radius:6px; padding:6px; background:#fff;
+    box-shadow:0 0 16px rgba(0,0,0,0.5);
+  }
+  .race-qr-corner-lbl {
+    font-family:'Barlow Condensed',sans-serif; font-weight:700;
+    font-size:clamp(8px,0.9vw,11px); letter-spacing:3px; text-transform:uppercase;
+    color:rgba(224,208,166,0.4);
+  }
 </style>
 </head>
 <body>
@@ -123,7 +160,11 @@
       <div class="idle-team-lbl">Lower Bowl</div>
     </div>
   </div>
-  <div class="idle-cta">Scan QR Code to Join · First Team to 3 Laps Wins!</div>
+  <div class="idle-cta">Scan to Join · First Team to 3 Laps Wins!</div>
+  <div class="idle-qr-wrap">
+    <img class="idle-qr" src="/qr.png" alt="Scan to join">
+    <div class="idle-qr-lbl">Scan to Play</div>
+  </div>
   <div class="idle-motto">BETTER THAN THE BEST</div>
 </div>
 
@@ -179,6 +220,10 @@
   <!-- Ice rink — fills everything below the HUD -->
   <div class="track-section">
     <canvas id="track-canvas"></canvas>
+    <div class="race-qr-corner">
+      <img src="/qr.png" alt="Scan to join">
+      <div class="race-qr-corner-lbl">Scan to Play</div>
+    </div>
   </div>
 
 </div>
