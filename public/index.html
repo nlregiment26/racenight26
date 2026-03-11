@@ -203,12 +203,15 @@ function updateUI(s) {
   document.getElementById('pl').style.width = lu.pct + '%';
 }
 function showResult(s) {
-  const u = s.upper_taps||0, l = s.lower_taps||0, draw = u===l, ww = u>l;
-  document.getElementById('res-title').textContent = draw ? "IT'S A DRAW!" : ww ? 'WHITE WINS!' : 'MAROON WINS!';
-  document.getElementById('res-title').style.color = draw ? '#fff' : ww ? 'var(--tan)' : '#d05060';
-  document.getElementById('res-sub').textContent = draw ? 'What a race!' : ww ? 'Upper bowl takes it!' : 'Lower bowl takes it!';
+  const u = s.upper_taps||0, m = s.lower_taps||0;
+  const winner = s.winner; // 'upper' | 'lower' | 'tie'
+  const draw = winner === 'tie';
+  const myWon = myBowl === 'white' ? winner === 'upper' : winner === 'lower';
+  document.getElementById('res-title').textContent = draw ? "IT'S A DRAW!" : myWon ? 'YOUR TEAM WINS!' : (winner === 'upper' ? 'WHITE WINS!' : 'MAROON WINS!');
+  document.getElementById('res-title').style.color = draw ? '#fff' : myWon ? 'var(--tan)' : '#d05060';
+  document.getElementById('res-sub').textContent = draw ? 'What a race!' : myWon ? 'Amazing effort — well done!' : (winner === 'upper' ? 'Upper bowl takes it!' : 'Lower bowl takes it!');
   document.getElementById('fw').textContent = u;
-  document.getElementById('fm').textContent = l;
+  document.getElementById('fm').textContent = m;
   show('screen-result');
 }
 function handleTap() {

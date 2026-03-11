@@ -137,17 +137,17 @@
   <div class="card-lbl">Game Controls</div>
   <div class="config-row">
     <div class="cfg-lbl">Duration</div>
-    <button class="cfg-btn" onclick="setDur(30,this)">30s</button>
-    <button class="cfg-btn on" id="dur-60" onclick="setDur(60,this)">60s</button>
-    <button class="cfg-btn" onclick="setDur(90,this)">90s</button>
-    <button class="cfg-btn" onclick="setDur(120,this)">2 min</button>
+    <button class="cfg-btn" onclick="setDur(180,this)">3 min</button>
+    <button class="cfg-btn on" id="dur-300" onclick="setDur(300,this)">5 min</button>
+    <button class="cfg-btn" onclick="setDur(420,this)">7 min</button>
+    <button class="cfg-btn" onclick="setDur(600,this)">10 min</button>
   </div>
   <div class="config-row">
     <div class="cfg-lbl">Taps/Lap</div>
-    <button class="cfg-btn" onclick="setTpl(25,this)">25</button>
-    <button class="cfg-btn on" id="tpl-50" onclick="setTpl(50,this)">50</button>
-    <button class="cfg-btn" onclick="setTpl(75,this)">75</button>
     <button class="cfg-btn" onclick="setTpl(100,this)">100</button>
+    <button class="cfg-btn on" id="tpl-200" onclick="setTpl(200,this)">200</button>
+    <button class="cfg-btn" onclick="setTpl(300,this)">300</button>
+    <button class="cfg-btn" onclick="setTpl(500,this)">500</button>
   </div>
   <div class="btn-row">
     <button class="btn btn-start" id="btn-start" onclick="startGame()">▶ START RACE</button>
@@ -167,7 +167,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
-let duration = 60, tapsPerLap = 50, timerInt = null, gameActive = false;
+let duration = 300, tapsPerLap = 200, timerInt = null, gameActive = false;
 
 document.getElementById('fan-url').textContent = window.location.origin + '/';
 
@@ -204,7 +204,7 @@ socket.on('state', (s) => {
 
   if (s.active && !gameActive) { gameActive=true; setUI(true); const el=(Date.now()-s.started_at)/1000; startLocalTimer(Math.round(s.duration-el)); }
   if (!s.active && !s.ended && gameActive) { gameActive=false; setUI(false); }
-  if (!s.active && s.ended && gameActive) { gameActive=false; setUI(false); clearInterval(timerInt); document.getElementById('d-timer-sub').textContent='race ended'; log(`Ended · White:${u} Maroon:${m}`,'warn'); }
+  if (!s.active && s.ended && gameActive) { gameActive=false; setUI(false); clearInterval(timerInt); document.getElementById('d-timer-sub').textContent='race ended'; const w=s.winner==='upper'?'WHITE':s.winner==='lower'?'MAROON':'TIE'; log(`Race over · Winner: ${w} · White:${u} Maroon:${m}`,'warn'); }
 });
 
 function setUI(active) {

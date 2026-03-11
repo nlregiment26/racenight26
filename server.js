@@ -8,11 +8,14 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 app.use(express.static(path.join(__dirname, 'public')));
 
+const LAPS_TO_WIN = 3;
+
 let state = {
   active: false, ended: false, game_id: null,
-  duration: 60, taps_per_lap: 50,
+  duration: 300, taps_per_lap: 200,
   started_at: null, upper_taps: 0, lower_taps: 0,
   upper_players: 0, lower_players: 0,
+  winner: null,  // 'upper' | 'lower' | 'tie' | null
 };
 
 const teamMap = new Map();
@@ -25,6 +28,22 @@ function updatePlayerCounts() {
   state.lower_players = l;
 }
 function broadcast() { io.emit('state', state); }
+
+function checkWin() {
+  if (!state.active) return;
+  const uLaps = Math.floor(state.upper_taps / state.taps_per_lap);
+  const lLaps = Math.floor(state.lower_taps / state.taps_per_lap);
+  if (uLaps >= LAPS_TO_WIN || lLaps >= LAPS_TO_WIN) {
+    clearTimeout(gameTimer);
+    state.active = false;
+    state.ended = true;
+    if (uLaps >= LAPS_TO_WIN && lLaps >= LAPS_TO_WIN) state.winner = 'tie';
+    else if (uLaps >= LAPS_TO_WIN) state.winner = 'upper';
+    else state.winner = 'lower';
+    broadcast();
+    console.log(`[WIN] ${state.winner} | W:${state.upper_taps} M:${state.lower_taps}`);
+  }
+}
 
 io.on('connection', (socket) => {
   console.log(`[+] ${socket.id}`);
@@ -43,19 +62,27 @@ io.on('connection', (socket) => {
     else if (bowl === 'lower') state.lower_taps++;
     if (!teamMap.get(socket.id)) { teamMap.set(socket.id, bowl); updatePlayerCounts(); }
     broadcast();
+    checkWin();
   });
 
   socket.on('director:start', ({ duration, taps_per_lap }) => {
     if (state.active) return;
     clearTimeout(gameTimer);
     state = { ...state, active: true, ended: false, game_id: 'game_' + Date.now(),
-      duration: duration || 60, taps_per_lap: taps_per_lap || 50,
+      winner: null,
+      duration: duration || 300, taps_per_lap: taps_per_lap || 200,
       started_at: Date.now(), upper_taps: 0, lower_taps: 0 };
     broadcast();
     console.log(`[START] ${state.game_id} | ${state.duration}s | ${state.taps_per_lap} taps/lap`);
+    // Fallback timer — game should end via lap win, but keep as safety net
     gameTimer = setTimeout(() => {
-      state.active = false; state.ended = true; broadcast();
-      console.log(`[END] W:${state.upper_taps} M:${state.lower_taps}`);
+      if (!state.active) return;
+      state.active = false; state.ended = true;
+      const uLaps = Math.floor(state.upper_taps / state.taps_per_lap);
+      const lLaps = Math.floor(state.lower_taps / state.taps_per_lap);
+      state.winner = uLaps > lLaps ? 'upper' : lLaps > uLaps ? 'lower' : 'tie';
+      broadcast();
+      console.log(`[TIMEOUT] W:${state.upper_taps} M:${state.lower_taps}`);
     }, state.duration * 1000);
   });
 

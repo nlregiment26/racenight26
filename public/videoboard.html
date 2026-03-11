@@ -117,7 +117,7 @@
       <div class="idle-team-lbl">Lower Bowl</div>
     </div>
   </div>
-  <div class="idle-cta">Scan QR Code to Join · Tap Your Way to Victory</div>
+  <div class="idle-cta">Scan QR Code to Join · First Team to 3 Laps Wins!</div>
   <div class="idle-motto">BETTER THAN THE BEST</div>
 </div>
 
@@ -465,7 +465,7 @@ socket.on('state', (state) => {
 
   } else if (state.ended && cur === 'race') {
     clearInterval(localTimer);
-    showResult(state.upper_taps||0, state.lower_taps||0);
+    showResult(state.upper_taps||0, state.lower_taps||0, state.winner);
   } else if (!state.active && !state.ended && cur !== 'idle') {
     clearInterval(localTimer);
     show('idle');
@@ -484,9 +484,9 @@ function setTimerDisplay(s) {
   el.className = 'timer-num' + (s<=10&&s>0?' hot':'');
 }
 
-function showResult(u, m) {
+function showResult(u, m, winner) {
   cancelAnimationFrame(animFrame); animFrame = null;
-  const draw=u===m, ww=u>m;
+  const draw = winner === 'tie', ww = winner === 'upper';
   document.getElementById('rw').textContent = draw?"IT'S A DRAW!":ww?'WHITE WINS!':'MAROON WINS!';
   document.getElementById('rw').style.color = draw?'#fff':ww?'var(--tan)':'#d05060';
   document.getElementById('rs').textContent = draw?'What an incredible race!':ww?'Upper Bowl takes it!':'Lower Bowl takes it!';
