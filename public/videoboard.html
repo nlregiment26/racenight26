@@ -34,50 +34,56 @@
   .idle-motto { font-size:clamp(11px,1.3vw,15px); letter-spacing:5px; color:rgba(255,255,255,0.15); font-family:'Barlow Condensed',sans-serif; font-weight:700; margin-top:6px; }
 
   /* ── RACE ── */
-  #sc-race { padding:2% 5%; justify-content:space-between; }
+  #sc-race { padding:0; justify-content:flex-start; }
 
-  /* Top bar */
-  .race-top { width:100%; display:flex; justify-content:space-between; align-items:center; padding-bottom:1.5vh; border-bottom:1px solid rgba(224,208,166,0.15); flex-shrink:0; }
-  .team-col { display:flex; flex-direction:column; gap:2px; min-width:28%; }
-  .team-col.right { align-items:flex-end; }
-  .t-lbl { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:clamp(10px,1.3vw,16px); letter-spacing:4px; text-transform:uppercase; }
-  .t-lbl.wt { color:var(--tan); opacity:0.6; }
-  .t-lbl.mt { color:#d05060; opacity:0.6; }
-  .t-name { font-family:'NLRegiment',sans-serif; font-size:clamp(44px,6vw,90px); letter-spacing:4px; line-height:1; }
-  .t-name.wt { color:var(--tan); text-shadow:0 0 40px rgba(224,208,166,0.35); }
-  .t-name.mt { color:#d05060; text-shadow:0 0 40px rgba(138,36,50,0.5); }
-  .t-score { font-family:'NLRegiment',sans-serif; font-size:clamp(60px,9vw,130px); line-height:1; }
-  .t-score.wt { color:var(--tan); text-shadow:0 0 50px rgba(224,208,166,0.4); }
-  .t-score.mt { color:#d05060; text-shadow:0 0 50px rgba(138,36,50,0.6); }
-  .t-players { font-family:'Barlow Condensed',sans-serif; font-size:clamp(12px,1.5vw,18px); letter-spacing:2px; font-weight:700; }
-  .t-players.wt { color:rgba(224,208,166,0.45); }
-  .t-players.mt { color:rgba(208,80,96,0.5); }
+  /* ── HUD BAR (compact single row) ── */
+  .hud-bar {
+    width:100%; flex-shrink:0;
+    display:grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items:center;
+    padding:6px 2.5% 5px;
+    background:rgba(5,15,28,0.88);
+    border-bottom:2px solid rgba(138,36,50,0.5);
+    gap:0;
+  }
 
-  /* Center timer */
-  .center-col { text-align:center; display:flex; flex-direction:column; align-items:center; gap:4px; }
-  .nlr-small { width:clamp(40px,6vh,70px); opacity:0.6; }
-  .timer-num { font-family:'NLRegiment',sans-serif; font-size:clamp(50px,8vw,110px); line-height:1; color:var(--tan); }
+  /* Team sides */
+  .hud-team { display:flex; align-items:center; gap:10px; }
+  .hud-team.right { justify-content:flex-end; flex-direction:row-reverse; }
+  .hud-score { font-family:'NLRegiment',sans-serif; line-height:1; font-size:clamp(36px,5.5vw,80px); }
+  .hud-score.wt { color:var(--tan); text-shadow:0 0 30px rgba(224,208,166,0.45); }
+  .hud-score.mt { color:#d05060; text-shadow:0 0 30px rgba(138,36,50,0.6); }
+  .hud-team-info { display:flex; flex-direction:column; gap:1px; }
+  .hud-name { font-family:'NLRegiment',sans-serif; font-size:clamp(20px,2.8vw,42px); letter-spacing:3px; line-height:1; }
+  .hud-name.wt { color:var(--tan); }
+  .hud-name.mt { color:#d05060; }
+  .hud-meta { display:flex; align-items:center; gap:8px; }
+  .hud-bowl { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:clamp(9px,1vw,13px); letter-spacing:3px; text-transform:uppercase; opacity:0.4; }
+  .hud-bowl.wt { color:var(--tan); }
+  .hud-bowl.mt { color:#d05060; }
+  .hud-players { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:clamp(9px,1vw,13px); letter-spacing:2px; }
+  .hud-players.wt { color:rgba(224,208,166,0.35); }
+  .hud-players.mt { color:rgba(208,80,96,0.4); }
+  /* Lap pips inline */
+  .hud-laps { display:flex; gap:4px; align-items:center; }
+  .hud-pip { width:clamp(22px,2.8vw,40px); height:6px; border-radius:2px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.07); transition:all .35s; }
+  .hud-pip.done.wt { background:var(--tan); border-color:var(--tan); box-shadow:0 0 8px rgba(224,208,166,0.5); }
+  .hud-pip.done.mt { background:var(--maroon); border-color:var(--maroon); box-shadow:0 0 8px rgba(138,36,50,0.6); }
+  .hud-pip.cur.wt { background:linear-gradient(90deg, var(--tan) var(--p,0%), rgba(255,255,255,0.07) var(--p,0%)); border-color:rgba(224,208,166,0.4); }
+  .hud-pip.cur.mt { background:linear-gradient(90deg, var(--maroon) var(--p,0%), rgba(255,255,255,0.06) var(--p,0%)); border-color:rgba(138,36,50,0.5); }
+
+  /* Centre HUD: logo + timer */
+  .hud-center { display:flex; flex-direction:column; align-items:center; gap:1px; padding:0 2vw; }
+  .nlr-small { width:clamp(28px,4vh,46px); opacity:0.55; }
+  .timer-num { font-family:'NLRegiment',sans-serif; font-size:clamp(30px,4.5vw,64px); line-height:1; color:var(--tan); }
   .timer-num.hot { color:#d05060; animation:thot 1s infinite; }
-  @keyframes thot{0%,100%{opacity:1}50%{opacity:.55}}
-  .timer-lbl { font-family:'Barlow Condensed',sans-serif; font-size:clamp(10px,1.2vw,14px); letter-spacing:4px; text-transform:uppercase; color:rgba(224,208,166,0.3); font-weight:700; }
+  @keyframes thot{0%,100%{opacity:1}50%{opacity:.5}}
+  .timer-lbl { font-family:'Barlow Condensed',sans-serif; font-size:clamp(8px,0.9vw,11px); letter-spacing:4px; text-transform:uppercase; color:rgba(224,208,166,0.25); font-weight:700; }
 
-  /* Lap indicators */
-  .laps-row { width:100%; display:flex; gap:2%; align-items:center; padding:1vh 0; flex-shrink:0; }
-  .lap-block { flex:1; display:flex; flex-direction:column; gap:5px; }
-  .lap-block.right { align-items:flex-end; }
-  .lap-block-lbl { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:clamp(9px,1.1vw,13px); letter-spacing:4px; text-transform:uppercase; opacity:0.4; }
-  .lap-pips { display:flex; gap:clamp(4px,0.6vw,10px); }
-  .lap-pip { height:clamp(8px,1.2vh,14px); border-radius:2px; transition:all .35s; border:1px solid rgba(255,255,255,0.1); }
-  .lap-pip.wt { flex:1; background:rgba(255,255,255,0.06); }
-  .lap-pip.mt { flex:1; background:rgba(255,255,255,0.06); }
-  .lap-pip.done.wt { background:var(--tan); border-color:var(--tan); box-shadow:0 0 12px rgba(224,208,166,0.5); }
-  .lap-pip.done.mt { background:var(--maroon); border-color:var(--maroon); box-shadow:0 0 12px rgba(138,36,50,0.7); }
-  .lap-pip.cur.wt { background:linear-gradient(90deg, var(--tan) var(--p,0%), rgba(255,255,255,0.07) var(--p,0%)); border-color:rgba(224,208,166,0.5); }
-  .lap-pip.cur.mt { background:linear-gradient(90deg, var(--maroon) var(--p,0%), rgba(255,255,255,0.06) var(--p,0%)); border-color:rgba(138,36,50,0.6); }
-
-  /* ── OVAL RACE TRACK ── */
-  .track-section { width:100%; flex:1; position:relative; min-height:0; display:flex; align-items:center; justify-content:center; }
-  #track-canvas { width:100%; height:100%; }
+  /* ── RINK CANVAS ── */
+  .track-section { width:100%; flex:1; min-height:0; display:flex; align-items:stretch; justify-content:center; }
+  #track-canvas { width:100%; height:100%; display:block; }
 
   /* ── RESULT ── */
   #sc-result { gap:20px; text-align:center; background:radial-gradient(ellipse at 50% 40%, rgba(138,36,50,0.2), transparent 70%); }
@@ -123,52 +129,58 @@
 
 <!-- RACE -->
 <div class="screen hidden" id="sc-race">
-  <!-- Scores -->
-  <div class="race-top">
-    <div class="team-col">
-      <div class="t-lbl wt">Upper Bowl</div>
-      <div class="t-name wt">WHITE</div>
-      <div class="t-score wt" id="sw">0</div>
-      <div class="t-players wt" id="pw">— players</div>
+
+  <!-- Compact HUD bar -->
+  <div class="hud-bar">
+
+    <!-- White team (left) -->
+    <div class="hud-team">
+      <div class="hud-score wt" id="sw">0</div>
+      <div class="hud-team-info">
+        <div class="hud-name wt">WHITE</div>
+        <div class="hud-meta">
+          <div class="hud-bowl wt">Upper Bowl</div>
+          <div class="hud-players wt" id="pw">— players</div>
+        </div>
+        <div class="hud-laps">
+          <div class="hud-pip wt" id="vwl0"></div>
+          <div class="hud-pip wt" id="vwl1"></div>
+          <div class="hud-pip wt" id="vwl2"></div>
+        </div>
+      </div>
     </div>
-    <div class="center-col">
+
+    <!-- Centre: logo + timer -->
+    <div class="hud-center">
       <img class="nlr-small" src="/nlr-logo.svg" alt="NLR">
       <div class="timer-num" id="vtimer">—</div>
       <div class="timer-lbl">SECONDS</div>
     </div>
-    <div class="team-col right">
-      <div class="t-lbl mt">Lower Bowl</div>
-      <div class="t-name mt">MAROON</div>
-      <div class="t-score mt" id="sm">0</div>
-      <div class="t-players mt" id="pm">— players</div>
-    </div>
-  </div>
 
-  <!-- Lap pips -->
-  <div class="laps-row">
-    <div class="lap-block">
-      <div class="lap-block-lbl">White Laps</div>
-      <div class="lap-pips">
-        <div class="lap-pip wt" id="vwl0"></div>
-        <div class="lap-pip wt" id="vwl1"></div>
-        <div class="lap-pip wt" id="vwl2"></div>
+    <!-- Maroon team (right) -->
+    <div class="hud-team right">
+      <div class="hud-score mt" id="sm">0</div>
+      <div class="hud-team-info" style="align-items:flex-end">
+        <div class="hud-name mt">MAROON</div>
+        <div class="hud-meta">
+          <div class="hud-players mt" id="pm">— players</div>
+          <div class="hud-bowl mt">Lower Bowl</div>
+        </div>
+        <div class="hud-laps">
+          <div class="hud-pip mt" id="vml0"></div>
+          <div class="hud-pip mt" id="vml1"></div>
+          <div class="hud-pip mt" id="vml2"></div>
+        </div>
       </div>
     </div>
-    <div style="flex:0.3"></div>
-    <div class="lap-block right">
-      <div class="lap-block-lbl">Maroon Laps</div>
-      <div class="lap-pips">
-        <div class="lap-pip mt" id="vml0"></div>
-        <div class="lap-pip mt" id="vml1"></div>
-        <div class="lap-pip mt" id="vml2"></div>
-      </div>
-    </div>
+
   </div>
 
-  <!-- Ice rink track -->
+  <!-- Ice rink — fills everything below the HUD -->
   <div class="track-section">
     <canvas id="track-canvas"></canvas>
   </div>
+
 </div>
 
 <!-- RESULT -->
@@ -475,7 +487,7 @@ function lapInfo(taps, tpl) {
 function updateLapPips(prefix, cls, done, pct) {
   for (let i=0;i<3;i++) {
     const el = document.getElementById(prefix+i);
-    el.className = 'lap-pip '+cls;
+    el.className = 'hud-pip '+cls;
     if (i < done) el.classList.add('done');
     else if (i === done && done < 3) { el.classList.add('cur'); el.style.setProperty('--p', Math.round(pct*100)+'%'); }
   }
