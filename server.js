@@ -6,6 +6,25 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
+// ── DIRECTOR PASSWORD ──
+const DIRECTOR_PASSWORD = process.env.DIRECTOR_PASSWORD || 'regiment';
+
+function basicAuth(req, res, next) {
+  const auth = req.headers['authorization'];
+  if (auth && auth.startsWith('Basic ')) {
+    const decoded = Buffer.from(auth.slice(6), 'base64').toString('utf8');
+    const [, pass] = decoded.split(':');
+    if (pass === DIRECTOR_PASSWORD) return next();
+  }
+  res.set('WWW-Authenticate', 'Basic realm="Director Access"');
+  res.status(401).send('Unauthorized');
+}
+
+// Protect director page before static middleware
+app.get('/director.html', basicAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'director.html'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 const LAPS_TO_WIN = 3;

@@ -28,7 +28,14 @@ gh repo create race-night --public --push
 3. Select your `race-night` repo
 4. Railway auto-detects Node.js and deploys
 
-### 3. Get your URLs
+### 3. Set your director password (recommended)
+In Railway, go to your service → **Variables** → add:
+```
+DIRECTOR_PASSWORD=yourchosenpassword
+```
+The default password is `regiment` if no variable is set. Anyone visiting `/director.html` will get a browser login prompt — username can be anything, only the password matters.
+
+### 4. Get your URLs
 After deploy, Railway gives you a public URL like:
 ```
 https://race-night-production.up.railway.app

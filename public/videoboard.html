@@ -165,7 +165,7 @@
     </div>
   </div>
 
-  <!-- Oval track canvas -->
+  <!-- Ice rink track -->
   <div class="track-section">
     <canvas id="track-canvas"></canvas>
   </div>
@@ -195,13 +195,15 @@ resizeBg(); window.addEventListener('resize', resizeBg);
 for (let i=0;i<120;i++) stars.push({x:Math.random()*3000,y:Math.random()*2000,r:Math.random()*.9+.2,a:Math.random()*.3+.05,vx:(Math.random()-.5)*.12,vy:(Math.random()-.5)*.12,c:Math.random()>.6?'138,36,50':'224,208,166'});
 (function bgloop(){bgx.clearRect(0,0,BW,BH);stars.forEach(s=>{s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=BW;if(s.x>BW)s.x=0;if(s.y<0)s.y=BH;if(s.y>BH)s.y=0;bgx.beginPath();bgx.arc(s.x,s.y,s.r,0,Math.PI*2);bgx.fillStyle=`rgba(${s.c},${s.a})`;bgx.fill();});requestAnimationFrame(bgloop);})();
 
-// ── OVAL TRACK CANVAS ──
+// ── RINK TRACK CANVAS ──
 const tc = document.getElementById('track-canvas');
 const tx = tc.getContext('2d');
 let TW, TH;
-let ballWPos = 0, ballMPos = 0;      // 0-1 around track perimeter
 let targetWPos = 0, targetMPos = 0;
-let lastTapsPerLap = 50;
+
+// Preload rink SVG as an image
+const rinkImg = new Image();
+rinkImg.src = '/rink.svg';
 
 function resizeTrack() {
   const sect = tc.parentElement;
@@ -210,207 +212,244 @@ function resizeTrack() {
 }
 window.addEventListener('resize', resizeTrack);
 
-// Build oval path points
-function buildOval(cx, cy, rx, ry, segments) {
+// ── RINK PATH ──
+// The SVG rink outline: rounded rect in 1440×810 viewbox
+// x: 5.75 → 1434.25  (width=1428.5), corner radius ≈ 109
+// y: 47.5 → 762.5    (height=715)
+// We build a scaled rounded-rect perimeter path matching the actual rink shape.
+// Two lanes: outer (White) close to boards, inner (Maroon) inset further.
+
+function buildRinkPath(TW, TH, insetFrac) {
+  // Scale rink SVG coords into canvas space
+  const SVG_W = 1440, SVG_H = 810;
+  const SVG_X0 = 5.75, SVG_X1 = 1434.25;
+  const SVG_Y0 = 47.5, SVG_Y1 = 762.5;
+  const SVG_RW = SVG_X1 - SVG_X0; // 1428.5
+  const SVG_RH = SVG_Y1 - SVG_Y0; // 715
+  const SVG_R  = 109; // corner radius in SVG units
+
+  // Fit rink into canvas with padding
+  const pad = TW * 0.04;
+  const scaleX = (TW - pad*2) / SVG_RW;
+  const scaleY = (TH - pad*2) / SVG_RH;
+  const scale  = Math.min(scaleX, scaleY);
+
+  const drawW = SVG_RW * scale;
+  const drawH = SVG_RH * scale;
+  const offX  = (TW - drawW) / 2;
+  const offY  = (TH - drawH) / 2;
+
+  // Apply inset for lane separation
+  const inset = TW * insetFrac;
+  const x0 = offX + inset;
+  const y0 = offY + inset;
+  const x1 = offX + drawW - inset;
+  const y1 = offY + drawH - inset;
+  const r  = Math.max(8, SVG_R * scale - inset);
+
+  // Generate perimeter points — rounded rect, starting top-centre, going clockwise
+  const SEGS_STRAIGHT = 80;
+  const SEGS_CORNER   = 40;
   const pts = [];
-  for (let i=0;i<segments;i++) {
-    const a = (i/segments) * Math.PI * 2 - Math.PI/2;
-    pts.push({ x: cx + Math.cos(a)*rx, y: cy + Math.sin(a)*ry });
+
+  function addArc(cx, cy, startA, endA) {
+    for (let i = 0; i <= SEGS_CORNER; i++) {
+      const a = startA + (endA - startA) * (i / SEGS_CORNER);
+      pts.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+    }
   }
+  function addLine(x0, y0, x1, y1) {
+    for (let i = 1; i < SEGS_STRAIGHT; i++) {
+      const t = i / SEGS_STRAIGHT;
+      pts.push({ x: x0 + (x1-x0)*t, y: y0 + (y1-y0)*t });
+    }
+  }
+
+  // Top edge: left→right
+  addLine(x0+r, y0, x1-r, y0);
+  // Top-right corner
+  addArc(x1-r, y0+r, -Math.PI/2, 0);
+  // Right edge: top→bottom
+  addLine(x1, y0+r, x1, y1-r);
+  // Bottom-right corner
+  addArc(x1-r, y1-r, 0, Math.PI/2);
+  // Bottom edge: right→left
+  addLine(x1-r, y1, x0+r, y1);
+  // Bottom-left corner
+  addArc(x0+r, y1-r, Math.PI/2, Math.PI);
+  // Left edge: bottom→top
+  addLine(x0, y1-r, x0, y0+r);
+  // Top-left corner
+  addArc(x0+r, y0+r, Math.PI, Math.PI*3/2);
+
   return pts;
 }
 
-function drawOvalPath(pts, color, lineW) {
+function getPointAtFraction(pts, f) {
+  const idx = ((f % 1) + 1) % 1 * pts.length;
+  const i0 = Math.floor(idx) % pts.length;
+  const i1 = (i0 + 1) % pts.length;
+  const t  = idx - Math.floor(idx);
+  return { x: pts[i0].x + (pts[i1].x - pts[i0].x)*t, y: pts[i0].y + (pts[i1].y - pts[i0].y)*t };
+}
+
+function drawPathStroke(pts, color, lineW) {
   tx.beginPath();
   tx.moveTo(pts[0].x, pts[0].y);
-  for (let i=1;i<pts.length;i++) tx.lineTo(pts[i].x, pts[i].y);
+  for (let i = 1; i < pts.length; i++) tx.lineTo(pts[i].x, pts[i].y);
   tx.closePath();
   tx.strokeStyle = color;
   tx.lineWidth = lineW;
   tx.stroke();
 }
 
-function getPointAtFraction(pts, f) {
-  const idx = (f * pts.length) % pts.length;
-  const i0 = Math.floor(idx) % pts.length;
-  const i1 = (i0+1) % pts.length;
-  const t = idx - Math.floor(idx);
-  return {
-    x: pts[i0].x + (pts[i1].x - pts[i0].x)*t,
-    y: pts[i0].y + (pts[i1].y - pts[i0].y)*t
-  };
-}
-
-// Draw arc from 0 to fraction in the oval's colour
-function drawArcProgress(pts, f, color, lineW) {
-  if (f <= 0) return;
-  const count = Math.floor(f * pts.length);
+function drawPathProgress(pts, frac, color, lineW) {
+  if (frac <= 0) return;
+  const count = Math.min(Math.floor(frac * pts.length), pts.length - 1);
   if (count < 2) return;
   tx.beginPath();
   tx.moveTo(pts[0].x, pts[0].y);
-  for (let i=1;i<=count;i++) tx.lineTo(pts[i%pts.length].x, pts[i%pts.length].y);
+  for (let i = 1; i <= count; i++) tx.lineTo(pts[i].x, pts[i].y);
   tx.strokeStyle = color;
   tx.lineWidth = lineW;
   tx.lineCap = 'round';
   tx.stroke();
 }
 
-function drawBall(x, y, color, glowColor, label) {
-  const r = Math.min(TW, TH) * 0.046;
+function drawPuck(x, y, color, glowColor, label) {
+  const r = Math.max(14, Math.min(TW, TH) * 0.038);
   tx.save();
-  // Glow
   tx.shadowColor = glowColor;
-  tx.shadowBlur = 20;
-  // Ball
-  const grad = tx.createRadialGradient(x-r*.3, y-r*.3, r*.1, x, y, r);
-  grad.addColorStop(0, lighten(color));
+  tx.shadowBlur = 24;
+  const grad = tx.createRadialGradient(x - r*.3, y - r*.3, r*.1, x, y, r);
+  grad.addColorStop(0, color === '#8A2432' ? '#c04060' : '#f0e8cc');
   grad.addColorStop(1, color);
   tx.beginPath();
   tx.arc(x, y, r, 0, Math.PI*2);
   tx.fillStyle = grad;
   tx.fill();
   tx.shadowBlur = 0;
-  // Label
   tx.fillStyle = '#fff';
-  tx.font = `bold ${r*0.9}px Barlow Condensed, sans-serif`;
+  tx.font = `bold ${Math.round(r * 0.85)}px Barlow Condensed, sans-serif`;
   tx.textAlign = 'center';
   tx.textBaseline = 'middle';
-  tx.fillText(label, x, y+1);
+  tx.fillText(label, x, y + 1);
   tx.restore();
 }
 
-function lighten(hex) {
-  // Simple lighten for radial gradient
-  if (hex === '#E0D0A6') return '#f0e8cc';
-  if (hex === '#8A2432') return '#c04060';
-  return '#fff';
-}
-
-// Draw lap markers (small tick marks around the oval)
-function drawLapMarkers(pts) {
-  // 3 equal divisions
-  for (let lap=1;lap<=3;lap++) {
-    const f = lap/3;
-    const idx = Math.floor(f * pts.length) % pts.length;
-    const pt = pts[idx];
-    const cx = TW/2, cy = TH/2;
-    const nx = (pt.x - cx), ny = (pt.y - cy);
-    const len = Math.sqrt(nx*nx+ny*ny);
-    const ux = nx/len, uy = ny/len;
-    const inset = 18, outset = 18;
+function drawLapTicks(pts, wLaps, mLaps) {
+  // Tick marks at 1/3 and 2/3 of path for lap boundaries
+  for (let lap = 1; lap <= 2; lap++) {
+    const pt  = getPointAtFraction(pts, lap / 3);
+    const pt2 = getPointAtFraction(pts, lap / 3 + 0.001);
+    const dx = pt2.x - pt.x, dy = pt2.y - pt.y;
+    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+    const nx = -dy/len, ny = dx/len; // normal
+    const tickLen = Math.max(8, TH * 0.025);
     tx.beginPath();
-    tx.moveTo(pt.x - ux*inset, pt.y - uy*inset);
-    tx.lineTo(pt.x + ux*outset, pt.y + uy*outset);
-    tx.strokeStyle = 'rgba(224,208,166,0.3)';
-    tx.lineWidth = 2;
+    tx.moveTo(pt.x - nx*tickLen, pt.y - ny*tickLen);
+    tx.lineTo(pt.x + nx*tickLen, pt.y + ny*tickLen);
+    tx.strokeStyle = 'rgba(224,208,166,0.55)';
+    tx.lineWidth = 2.5;
+    tx.setLineDash([]);
     tx.stroke();
-    // Lap number
-    if (lap < 3) {
-      tx.fillStyle = 'rgba(224,208,166,0.35)';
-      tx.font = `700 ${Math.max(10, TW*0.012)}px Barlow Condensed`;
-      tx.textAlign = 'center';
-      tx.textBaseline = 'middle';
-      tx.fillText('LAP '+lap, pt.x + ux*36, pt.y + uy*36);
-    }
+    // Label
+    tx.save();
+    tx.fillStyle = 'rgba(224,208,166,0.6)';
+    tx.font = `700 ${Math.max(10, TW*0.011)}px Barlow Condensed`;
+    tx.textAlign = 'center';
+    tx.textBaseline = 'middle';
+    tx.fillText(`LAP ${lap}`, pt.x + nx*(tickLen+14), pt.y + ny*(tickLen+14));
+    tx.restore();
   }
 }
 
-// Draw track number labels in center
-function drawCenterLabel(wLaps, mLaps) {
-  tx.save();
+function drawCenterInfo(wLaps, mLaps) {
   const cx = TW/2, cy = TH/2;
-  tx.fillStyle = 'rgba(10,34,64,0.7)';
+  const rw = TW * 0.1, rh = TH * 0.13;
+  tx.save();
+  tx.fillStyle = 'rgba(5,15,30,0.72)';
   tx.beginPath();
-  tx.ellipse(cx, cy, TW*0.14, TH*0.14, 0, 0, Math.PI*2);
+  tx.ellipse(cx, cy, rw, rh, 0, 0, Math.PI*2);
   tx.fill();
-  // NLR text
   tx.fillStyle = 'rgba(224,208,166,0.35)';
-  tx.font = `700 ${Math.max(11,TW*0.013)}px Barlow Condensed`;
+  tx.font = `700 ${Math.max(10, TW*0.011)}px Barlow Condensed`;
   tx.textAlign = 'center';
   tx.textBaseline = 'middle';
-  tx.fillText('LAP', cx, cy-TH*0.04);
-  tx.font = `${Math.max(18,TW*0.022)}px NLRegiment, sans-serif`;
-  tx.fillStyle = 'rgba(224,208,166,0.5)';
-  tx.fillText(wLaps + ' · ' + mLaps, cx, cy+TH*0.02);
+  tx.fillText('LAP', cx, cy - TH*0.045);
+  tx.font = `${Math.max(16, TW*0.02)}px NLRegiment, sans-serif`;
+  tx.fillStyle = 'rgba(224,208,166,0.55)';
+  tx.fillText(`${wLaps}  ·  ${mLaps}`, cx, cy + TH*0.018);
   tx.restore();
 }
 
 let animFrame;
-function drawTrack(wProgress, mProgress, wLapsDone, mLapsDone, tpl) {
+function drawRink(wProgress, mProgress, wLapsDone, mLapsDone) {
   if (!TW) resizeTrack();
   tx.clearRect(0, 0, TW, TH);
 
-  const cx = TW/2, cy = TH/2;
-  const rx = TW * 0.42, ry = TH * 0.38;
-  const SEGS = 300;
-
-  // Outer track (White, slightly larger)
-  const outerPts = buildOval(cx, cy, rx, ry, SEGS);
-  // Inner track (Maroon, slightly smaller)
-  const innerPts = buildOval(cx, cy, rx*0.82, ry*0.82, SEGS);
-
-  // Track backgrounds
-  drawOvalPath(outerPts, 'rgba(255,255,255,0.06)', 28);
-  drawOvalPath(outerPts, 'rgba(255,255,255,0.04)', 30);
-  drawOvalPath(innerPts, 'rgba(255,255,255,0.06)', 22);
-  drawOvalPath(innerPts, 'rgba(255,255,255,0.04)', 24);
-
-  // Lap markers
-  drawLapMarkers(outerPts);
-  drawLapMarkers(innerPts);
-
-  // Track lane labels
-  tx.save();
-  tx.fillStyle = 'rgba(224,208,166,0.15)';
-  tx.font = `700 ${Math.max(9,TW*0.011)}px Barlow Condensed`;
-  tx.textAlign = 'right';
-  tx.textBaseline = 'middle';
-  tx.fillText('WHITE', cx - rx - 10, cy);
-  tx.textAlign = 'left';
-  tx.fillText('MAROON', cx + rx*0.82 + 14, cy);
-  tx.restore();
-
-  // Progress arcs
-  // Completed laps → full glow arc
-  if (wLapsDone > 0) {
-    drawOvalPath(outerPts, 'rgba(224,208,166,0.7)', 8);
+  // Draw rink SVG background
+  if (rinkImg.complete && rinkImg.naturalWidth) {
+    // Fit rink into canvas
+    const SVG_W = 1440, SVG_H = 810;
+    const pad = TW * 0.04;
+    const scale = Math.min((TW - pad*2) / (1434.25 - 5.75), (TH - pad*2) / (762.5 - 47.5));
+    const drawW = (1434.25 - 5.75) * scale;
+    const drawH = (762.5 - 47.5)   * scale;
+    const offX  = (TW - drawW) / 2 - 5.75 * scale;
+    const offY  = (TH - drawH) / 2 - 47.5 * scale;
+    tx.save();
+    tx.globalAlpha = 0.92;
+    tx.drawImage(rinkImg, offX, offY, SVG_W * scale, SVG_H * scale);
+    tx.restore();
   }
-  // Current lap progress
-  drawArcProgress(outerPts, wProgress, 'rgba(224,208,166,0.9)', 8);
 
-  if (mLapsDone > 0) {
-    drawOvalPath(innerPts, 'rgba(138,36,50,0.7)', 6);
-  }
-  drawArcProgress(innerPts, mProgress, 'rgba(208,80,96,0.9)', 6);
+  // Build the two lane paths
+  const outerPts = buildRinkPath(TW, TH, 0.018); // White — just inside boards
+  const innerPts = buildRinkPath(TW, TH, 0.055); // Maroon — further inset
 
-  // Start/finish line
-  const startPt = getPointAtFraction(outerPts, 0);
-  const startPtI = getPointAtFraction(innerPts, 0);
+  // Glow trail for completed lap
+  if (wLapsDone > 0) drawPathStroke(outerPts, 'rgba(224,208,166,0.25)', 10);
+  if (mLapsDone > 0) drawPathStroke(innerPts, 'rgba(138,36,50,0.25)', 8);
+
+  // Current-lap progress arc
+  drawPathProgress(outerPts, wProgress, 'rgba(224,208,166,0.85)', 7);
+  drawPathProgress(innerPts, mProgress, 'rgba(208,80,96,0.85)', 6);
+
+  // Lane outlines (faint)
+  drawPathStroke(outerPts, 'rgba(224,208,166,0.12)', 3);
+  drawPathStroke(innerPts, 'rgba(208,80,96,0.10)', 2.5);
+
+  // Lap tick marks (on outer path as reference)
+  drawLapTicks(outerPts, wLapsDone, mLapsDone);
+
+  // Start/finish line — dashed line across both lanes at top-centre
+  const sPt1 = getPointAtFraction(outerPts, 0);
+  const sPt2 = getPointAtFraction(innerPts, 0);
   tx.beginPath();
-  tx.moveTo(startPt.x, startPt.y);
-  tx.lineTo(cx + (startPtI.x-cx)*0.5, cy + (startPtI.y-cy)*0.5);
-  tx.strokeStyle = 'rgba(224,208,166,0.5)';
+  tx.moveTo(sPt1.x, sPt1.y);
+  tx.lineTo(sPt2.x, sPt2.y);
+  tx.strokeStyle = 'rgba(255,255,255,0.7)';
   tx.lineWidth = 3;
-  tx.setLineDash([6,4]);
+  tx.setLineDash([6, 4]);
   tx.stroke();
   tx.setLineDash([]);
 
-  // Balls
-  const wBallPt = getPointAtFraction(outerPts, wProgress);
-  const mBallPt = getPointAtFraction(innerPts, mProgress);
-  drawBall(wBallPt.x, wBallPt.y, '#E0D0A6', 'rgba(224,208,166,0.8)', 'W');
-  drawBall(mBallPt.x, mBallPt.y, '#8A2432', 'rgba(138,36,50,0.9)', 'M');
+  // Pucks
+  const wPt = getPointAtFraction(outerPts, wProgress);
+  const mPt = getPointAtFraction(innerPts, mProgress);
+  drawPuck(wPt.x, wPt.y, '#E0D0A6', 'rgba(224,208,166,0.9)', 'W');
+  drawPuck(mPt.x, mPt.y, '#8A2432', 'rgba(138,36,50,1.0)',   'M');
 
-  // Center info
-  drawCenterLabel(wLapsDone, mLapsDone);
+  drawCenterInfo(wLapsDone, mLapsDone);
 }
 
 // Smooth animation
-let curWp = 0, curMp = 0, curWLaps = 0, curMLaps = 0, curTpl = 50;
+let curWp = 0, curMp = 0, curWLaps = 0, curMLaps = 0;
 function animateTrack() {
   curWp += (targetWPos - curWp) * 0.12;
   curMp += (targetMPos - curMp) * 0.12;
-  drawTrack(curWp, curMp, curWLaps, curMLaps, curTpl);
+  drawRink(curWp, curMp, curWLaps, curMLaps);
   animFrame = requestAnimationFrame(animateTrack);
 }
 
@@ -458,8 +497,7 @@ socket.on('state', (state) => {
     updateLapPips('vwl','wt',wu.done,wu.pct);
     updateLapPips('vml','mt',mu.done,mu.pct);
 
-    // Track
-    curWLaps = wu.done; curMLaps = mu.done; curTpl = tpl;
+    curWLaps = wu.done; curMLaps = mu.done;
     targetWPos = wu.pct;
     targetMPos = mu.pct;
 
