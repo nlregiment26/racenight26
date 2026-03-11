@@ -5,100 +5,76 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: '*' }
-});
-
+const io = new Server(server, { cors: { origin: '*' } });
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── GAME STATE ──
 let state = {
-  active: false,
-  ended: false,
-  game_id: null,
-  duration: 60,
-  started_at: null,
-  upper_taps: 0,
-  lower_taps: 0,
+  active: false, ended: false, game_id: null,
+  duration: 60, taps_per_lap: 50,
+  started_at: null, upper_taps: 0, lower_taps: 0,
+  upper_players: 0, lower_players: 0,
 };
 
+const teamMap = new Map();
 let gameTimer = null;
 
-function broadcastState() {
-  io.emit('state', state);
+function updatePlayerCounts() {
+  let u = 0, l = 0;
+  for (const t of teamMap.values()) { if (t === 'upper') u++; else if (t === 'lower') l++; }
+  state.upper_players = u;
+  state.lower_players = l;
 }
+function broadcast() { io.emit('state', state); }
 
-// ── SOCKET EVENTS ──
 io.on('connection', (socket) => {
-  console.log(`[+] connected: ${socket.id}`);
-
-  // Send current state immediately on connect
+  console.log(`[+] ${socket.id}`);
+  teamMap.set(socket.id, null);
   socket.emit('state', state);
 
-  // Fan taps
+  socket.on('join_team', ({ bowl }) => {
+    teamMap.set(socket.id, bowl);
+    updatePlayerCounts();
+    broadcast();
+  });
+
   socket.on('tap', ({ bowl }) => {
     if (!state.active) return;
     if (bowl === 'upper') state.upper_taps++;
     else if (bowl === 'lower') state.lower_taps++;
-    broadcastState();
+    if (!teamMap.get(socket.id)) { teamMap.set(socket.id, bowl); updatePlayerCounts(); }
+    broadcast();
   });
 
-  // Director: start game
-  socket.on('director:start', ({ duration }) => {
+  socket.on('director:start', ({ duration, taps_per_lap }) => {
     if (state.active) return;
     clearTimeout(gameTimer);
-
-    state = {
-      active: true,
-      ended: false,
-      game_id: 'game_' + Date.now(),
-      duration: duration || 60,
-      started_at: Date.now(),
-      upper_taps: 0,
-      lower_taps: 0,
-    };
-
-    broadcastState();
-    console.log(`[START] game ${state.game_id} | ${state.duration}s`);
-
+    state = { ...state, active: true, ended: false, game_id: 'game_' + Date.now(),
+      duration: duration || 60, taps_per_lap: taps_per_lap || 50,
+      started_at: Date.now(), upper_taps: 0, lower_taps: 0 };
+    broadcast();
+    console.log(`[START] ${state.game_id} | ${state.duration}s | ${state.taps_per_lap} taps/lap`);
     gameTimer = setTimeout(() => {
-      state.active = false;
-      state.ended = true;
-      broadcastState();
-      console.log(`[END] auto-ended | W:${state.upper_taps} P:${state.lower_taps}`);
+      state.active = false; state.ended = true; broadcast();
+      console.log(`[END] W:${state.upper_taps} M:${state.lower_taps}`);
     }, state.duration * 1000);
   });
 
-  // Director: stop early
   socket.on('director:stop', () => {
-    clearTimeout(gameTimer);
-    state.active = false;
-    state.ended = true;
-    broadcastState();
-    console.log(`[STOP] manual stop | W:${state.upper_taps} P:${state.lower_taps}`);
+    clearTimeout(gameTimer); state.active = false; state.ended = true; broadcast();
   });
 
-  // Director: reset
   socket.on('director:reset', () => {
     clearTimeout(gameTimer);
-    state = {
-      active: false, ended: false, game_id: null,
-      duration: 60, started_at: null,
-      upper_taps: 0, lower_taps: 0,
-    };
-    broadcastState();
-    console.log('[RESET]');
+    state = { ...state, active: false, ended: false, game_id: null, started_at: null, upper_taps: 0, lower_taps: 0 };
+    broadcast();
   });
 
   socket.on('disconnect', () => {
-    console.log(`[-] disconnected: ${socket.id}`);
+    teamMap.delete(socket.id); updatePlayerCounts(); broadcast();
+    console.log(`[-] ${socket.id}`);
   });
 });
 
-// Health check for Railway
 app.get('/health', (req, res) => res.json({ ok: true }));
-
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Race Night server running on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`Race Night server on port ${PORT}`));

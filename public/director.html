@@ -3,75 +3,89 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Race Night – Director</title>
+<title>Newfoundland Regiment – Director</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+  @font-face { font-family:'NLRegiment'; src:url('/NLRegiment.otf') format('opentype'); }
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
-  :root { --bg:#060910; --panel:#0D1220; --border:rgba(255,255,255,0.08); --purple:#9B59F5; --green:#2ECC71; --red:#E74C3C; --amber:#F39C12; --ice:#7EC8E3; }
-  body { background:var(--bg); color:#fff; font-family:'Inter',sans-serif; min-height:100vh; padding:24px; }
+  :root { --navy:#0A2240; --maroon:#8A2432; --tan:#E0D0A6; --white:#fff; --panel:#0d1e35; --border:rgba(224,208,166,0.1); }
+  body { background:var(--navy); color:var(--white); font-family:'Barlow Condensed',sans-serif; min-height:100vh; padding:22px; }
 
-  header { display:flex; align-items:center; justify-content:space-between; padding-bottom:24px; border-bottom:1px solid var(--border); margin-bottom:28px; }
-  .logo { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:3px; }
-  .logo span { color:var(--purple); }
-  .pill { display:flex; align-items:center; gap:8px; padding:6px 14px; border-radius:99px; font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; border:1px solid; }
-  .pill.idle { border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.35); }
-  .pill.live { border-color:var(--green); color:var(--green); }
-  .pill .dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+  header { display:flex; align-items:center; justify-content:space-between; padding-bottom:20px; border-bottom:1px solid var(--border); margin-bottom:24px; }
+  .logo-row { display:flex; align-items:center; gap:14px; }
+  .hdr-logo { width:44px; filter:drop-shadow(0 0 10px rgba(138,36,50,0.5)); }
+  .logo-text { font-family:'NLRegiment',sans-serif; font-size:22px; letter-spacing:2px; }
+  .logo-text span { color:var(--tan); }
+  .pill { display:flex; align-items:center; gap:7px; padding:5px 14px; border-radius:2px; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; border:1px solid; }
+  .pill.idle { border-color:rgba(224,208,166,0.2); color:rgba(224,208,166,0.35); }
+  .pill.live { border-color:var(--maroon); color:#d05060; }
+  .pill .dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
   .pill.live .dot { animation:blink 1s infinite; }
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 
-  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
-  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:18px; }
-  .card { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:22px; }
-  .card-lbl { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:14px; font-weight:600; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:20px; }
+  .card-lbl { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:rgba(224,208,166,0.35); margin-bottom:14px; font-weight:700; }
 
   .score-card { text-align:center; }
-  .score-num { font-family:'Bebas Neue',sans-serif; font-size:68px; line-height:1; margin-bottom:4px; }
-  .score-num.w { color:#fff; } .score-num.p { color:var(--purple); }
-  .score-nm { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; opacity:0.4; }
-  .bar-bg { height:5px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden; margin-top:14px; }
-  .bar-fill { height:100%; border-radius:4px; transition:width .5s ease; }
-  .bar-w { background:linear-gradient(90deg,rgba(255,255,255,.2),#fff); }
-  .bar-p { background:linear-gradient(90deg,rgba(155,89,245,.3),var(--purple)); }
-  .pct { font-size:11px; font-family:'JetBrains Mono',monospace; opacity:0.25; margin-top:5px; }
+  .score-num { font-family:'NLRegiment',sans-serif; font-size:62px; line-height:1; margin-bottom:4px; }
+  .score-num.wt { color:var(--tan); }
+  .score-num.mt { color:#d05060; }
+  .score-nm { font-family:'NLRegiment',sans-serif; font-size:18px; letter-spacing:2px; opacity:0.35; }
+  .bar-bg { height:5px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; margin-top:12px; }
+  .bar-fill { height:100%; border-radius:2px; transition:width .5s; }
+  .bar-wt { background:linear-gradient(90deg,rgba(224,208,166,.25),var(--tan)); }
+  .bar-mt { background:linear-gradient(90deg,rgba(138,36,50,.4),#d05060); }
+  .pct { font-family:'JetBrains Mono',monospace; font-size:11px; opacity:0.2; margin-top:4px; }
+  .players { font-size:11px; letter-spacing:2px; color:rgba(224,208,166,0.4); margin-top:6px; font-weight:700; text-transform:uppercase; }
 
-  .stat-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .stat-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
   .stat-row:last-child { border:none; }
-  .sk { font-size:13px; color:rgba(255,255,255,0.4); }
+  .sk { font-size:13px; color:rgba(224,208,166,0.4); }
   .sv { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; }
 
-  .timer-big { font-family:'Bebas Neue',sans-serif; font-size:58px; line-height:1; }
-  .timer-sub { font-size:11px; letter-spacing:2px; color:rgba(255,255,255,0.25); margin-top:4px; text-transform:uppercase; }
+  .timer-big { font-family:'NLRegiment',sans-serif; font-size:54px; line-height:1; color:var(--tan); }
+  .timer-big.hot { color:#d05060; }
+  .timer-sub { font-size:10px; letter-spacing:3px; color:rgba(224,208,166,0.25); margin-top:4px; text-transform:uppercase; font-weight:700; }
 
-  .dur-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
-  .dur-btn { padding:8px 16px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:transparent; color:rgba(255,255,255,0.45); font-size:14px; font-weight:700; cursor:pointer; transition:all .1s; }
-  .dur-btn.on, .dur-btn:hover { border-color:var(--purple); color:var(--purple); background:rgba(155,89,245,0.1); }
+  .config-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .cfg-lbl { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:rgba(224,208,166,0.35); min-width:70px; font-weight:700; }
+  .cfg-btn { padding:7px 14px; border-radius:2px; border:1px solid rgba(224,208,166,0.15); background:transparent; color:rgba(224,208,166,0.4); font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all .1s; letter-spacing:1px; }
+  .cfg-btn.on, .cfg-btn:hover { border-color:var(--maroon); color:#d05060; background:rgba(138,36,50,0.12); }
 
-  .btn-row { display:flex; gap:12px; flex-wrap:wrap; }
-  .btn { padding:14px 28px; border-radius:12px; border:none; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; cursor:pointer; flex:1; min-width:140px; transition:all .12s; }
-  .btn:disabled { opacity:0.3; cursor:not-allowed; transform:none !important; }
+  .btn-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .btn { padding:13px 24px; border-radius:3px; border:none; font-family:'NLRegiment',sans-serif; font-size:18px; letter-spacing:2px; cursor:pointer; flex:1; min-width:130px; transition:all .12s; }
+  .btn:disabled { opacity:0.25; cursor:not-allowed; transform:none !important; }
   .btn:not(:disabled):hover { transform:translateY(-2px); }
   .btn:not(:disabled):active { transform:scale(0.97); }
-  .btn-start { background:var(--green); color:#000; }
-  .btn-stop { background:var(--red); color:#fff; }
-  .btn-reset { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.6); border:1px solid rgba(255,255,255,0.12) !important; }
+  .btn-start { background:var(--maroon); color:var(--tan); }
+  .btn-stop { background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.15) !important; }
+  .btn-reset { background:rgba(224,208,166,0.08); color:rgba(224,208,166,0.5); border:1px solid rgba(224,208,166,0.12) !important; }
 
-  .log { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px; height:150px; overflow-y:auto; font-family:'JetBrains Mono',monospace; font-size:11px; color:rgba(255,255,255,0.3); }
-  .le { padding:2px 0; }
-  .le.info{color:#7EC8E3} .le.ok{color:var(--green)} .le.warn{color:var(--amber)} .le.err{color:var(--red)}
+  .log { background:var(--navy); border:1px solid var(--border); border-radius:3px; padding:12px; height:140px; overflow-y:auto; font-family:'JetBrains Mono',monospace; font-size:11px; color:rgba(255,255,255,0.25); }
+  .le.info{color:var(--tan);opacity:.7}.le.ok{color:#2ECC71}.le.warn{color:#F39C12}.le.err{color:#E74C3C}
 
-  .conn-badge { display:inline-flex; align-items:center; gap:6px; font-size:11px; padding:4px 10px; border-radius:6px; }
-  .conn-badge.on { background:rgba(46,204,113,0.1); color:var(--green); border:1px solid rgba(46,204,113,0.2); }
-  .conn-badge.off { background:rgba(231,76,60,0.1); color:var(--red); border:1px solid rgba(231,76,60,0.2); }
+  .cb { display:inline-flex; align-items:center; gap:6px; font-size:11px; padding:4px 10px; border-radius:2px; font-weight:700; letter-spacing:1px; }
+  .cb.on { background:rgba(46,204,113,0.1); color:#2ECC71; border:1px solid rgba(46,204,113,0.2); }
+  .cb.off { background:rgba(231,76,60,0.1); color:#E74C3C; border:1px solid rgba(231,76,60,0.2); }
 
-  .url-box { background:var(--bg); border:1px solid rgba(155,89,245,0.2); border-radius:8px; padding:12px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--purple); word-break:break-all; margin-top:10px; }
+  .url-box { background:var(--navy); border:1px solid rgba(138,36,50,0.3); border-radius:3px; padding:10px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--tan); word-break:break-all; margin-top:8px; opacity:.7; }
+
+  .lap-info { display:flex; gap:10px; margin-top:10px; }
+  .lap-tag { padding:4px 10px; border-radius:2px; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; border:1px solid; }
+  .lap-tag.wt { border-color:rgba(224,208,166,0.3); color:var(--tan); background:rgba(224,208,166,0.07); }
+  .lap-tag.mt { border-color:rgba(138,36,50,0.4); color:#d05060; background:rgba(138,36,50,0.1); }
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">RACE NIGHT <span>DIRECTOR</span></div>
-  <div style="display:flex;gap:12px;align-items:center">
-    <div class="conn-badge off" id="conn-badge">● OFFLINE</div>
+  <div class="logo-row">
+    <img class="hdr-logo" src="/nlr-logo.svg" alt="NLR">
+    <div class="logo-text">NEWFOUNDLAND REGIMENT <span>// DIRECTOR</span></div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <div class="cb off" id="cb">● OFFLINE</div>
     <div class="pill idle" id="pill"><div class="dot"></div><span id="pill-txt">IDLE</span></div>
   </div>
 </header>
@@ -79,17 +93,19 @@
 <div class="grid2">
   <div class="card score-card">
     <div class="card-lbl">Team White · Upper Bowl</div>
-    <div class="score-num w" id="d-upper">0</div>
+    <div class="score-num wt" id="d-upper">0</div>
     <div class="score-nm">WHITE</div>
-    <div class="bar-bg"><div class="bar-fill bar-w" id="bw" style="width:0%"></div></div>
+    <div class="players" id="p-upper">0 players</div>
+    <div class="bar-bg"><div class="bar-fill bar-wt" id="bw" style="width:0%"></div></div>
     <div class="pct" id="pw">0%</div>
   </div>
   <div class="card score-card">
-    <div class="card-lbl">Team Purple · Lower Bowl</div>
-    <div class="score-num p" id="d-lower">0</div>
-    <div class="score-nm">PURPLE</div>
-    <div class="bar-bg"><div class="bar-fill bar-p" id="bp" style="width:0%"></div></div>
-    <div class="pct" id="pp">0%</div>
+    <div class="card-lbl">Team Maroon · Lower Bowl</div>
+    <div class="score-num mt" id="d-lower">0</div>
+    <div class="score-nm">MAROON</div>
+    <div class="players" id="p-lower">0 players</div>
+    <div class="bar-bg"><div class="bar-fill bar-mt" id="bm" style="width:0%"></div></div>
+    <div class="pct" id="pm">0%</div>
   </div>
 </div>
 
@@ -104,22 +120,34 @@
     <div class="stat-row"><div class="sk">Total taps</div><div class="sv" id="d-total">0</div></div>
     <div class="stat-row"><div class="sk">Leader</div><div class="sv" id="d-leader">—</div></div>
     <div class="stat-row"><div class="sk">Margin</div><div class="sv" id="d-margin">—</div></div>
-    <div class="stat-row"><div class="sk">Connected</div><div class="sv" id="d-clients">—</div></div>
+    <div class="stat-row"><div class="sk">Total players</div><div class="sv" id="d-players">0</div></div>
+    <div class="lap-info">
+      <span class="lap-tag wt" id="wlaps">W: Lap 0</span>
+      <span class="lap-tag mt" id="mlaps">M: Lap 0</span>
+    </div>
   </div>
   <div class="card">
     <div class="card-lbl">Fan App URL</div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:6px">Share via QR or PA</div>
+    <div style="font-size:11px;color:rgba(224,208,166,0.3);margin-bottom:6px;letter-spacing:1px">Share via QR · PA announcement</div>
     <div class="url-box" id="fan-url">—</div>
   </div>
 </div>
 
-<div class="card" style="margin-bottom:18px">
+<div class="card" style="margin-bottom:16px">
   <div class="card-lbl">Game Controls</div>
-  <div class="dur-row" id="dur-row">
-    <button class="dur-btn" onclick="setDur(30,this)">30s</button>
-    <button class="dur-btn on" onclick="setDur(60,this)">60s</button>
-    <button class="dur-btn" onclick="setDur(90,this)">90s</button>
-    <button class="dur-btn" onclick="setDur(120,this)">2 min</button>
+  <div class="config-row">
+    <div class="cfg-lbl">Duration</div>
+    <button class="cfg-btn" onclick="setDur(30,this)">30s</button>
+    <button class="cfg-btn on" id="dur-60" onclick="setDur(60,this)">60s</button>
+    <button class="cfg-btn" onclick="setDur(90,this)">90s</button>
+    <button class="cfg-btn" onclick="setDur(120,this)">2 min</button>
+  </div>
+  <div class="config-row">
+    <div class="cfg-lbl">Taps/Lap</div>
+    <button class="cfg-btn" onclick="setTpl(25,this)">25</button>
+    <button class="cfg-btn on" id="tpl-50" onclick="setTpl(50,this)">50</button>
+    <button class="cfg-btn" onclick="setTpl(75,this)">75</button>
+    <button class="cfg-btn" onclick="setTpl(100,this)">100</button>
   </div>
   <div class="btn-row">
     <button class="btn btn-start" id="btn-start" onclick="startGame()">▶ START RACE</button>
@@ -130,7 +158,7 @@
 
 <div class="card">
   <div class="card-lbl" style="display:flex;align-items:center;gap:8px">
-    <span id="log-dot" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.15);display:inline-block"></span>
+    <span id="log-dot" style="width:6px;height:6px;border-radius:50%;background:rgba(224,208,166,0.15);display:inline-block"></span>
     Director Log
   </div>
   <div class="log" id="log"></div>
@@ -139,118 +167,69 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const socket = io();
-let duration = 60;
-let timerInterval = null;
-let gameActive = false;
-let prevUpper = 0, prevLower = 0, prevTime = Date.now();
+let duration = 60, tapsPerLap = 50, timerInt = null, gameActive = false;
 
 document.getElementById('fan-url').textContent = window.location.origin + '/';
 
 function log(msg, type='') {
   const box = document.getElementById('log');
-  const t = new Date().toLocaleTimeString('en-CA', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const t = new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const el = document.createElement('div');
   el.className = 'le ' + type;
   el.textContent = `[${t}] ${msg}`;
   box.insertBefore(el, box.firstChild);
-  document.getElementById('log-dot').style.background = type === 'err' ? '#E74C3C' : type === 'ok' ? '#2ECC71' : '#7EC8E3';
+  document.getElementById('log-dot').style.background = type==='err'?'#E74C3C':type==='ok'?'#2ECC71':type==='warn'?'#F39C12':'rgba(224,208,166,0.5)';
 }
 
-socket.on('connect', () => {
-  document.getElementById('conn-badge').className = 'conn-badge on';
-  document.getElementById('conn-badge').textContent = '● LIVE';
-  log('Connected to server', 'ok');
-});
-socket.on('disconnect', () => {
-  document.getElementById('conn-badge').className = 'conn-badge off';
-  document.getElementById('conn-badge').textContent = '● OFFLINE';
-  log('Disconnected from server', 'err');
-});
+socket.on('connect', () => { document.getElementById('cb').className='cb on'; document.getElementById('cb').textContent='● LIVE'; log('Connected','ok'); });
+socket.on('disconnect', () => { document.getElementById('cb').className='cb off'; document.getElementById('cb').textContent='● OFFLINE'; log('Disconnected','err'); });
 
-socket.on('state', (state) => {
-  updateScores(state.upper_taps || 0, state.lower_taps || 0);
-
-  if (state.active && !gameActive) {
-    gameActive = true;
-    setUIActive(true);
-    const elapsed = (Date.now() - state.started_at) / 1000;
-    startLocalTimer(Math.round(state.duration - elapsed));
-  }
-  if (!state.active && !state.ended && gameActive) {
-    gameActive = false;
-    setUIActive(false);
-  }
-  if (!state.active && state.ended && gameActive) {
-    gameActive = false;
-    setUIActive(false);
-    clearInterval(timerInterval);
-    document.getElementById('d-timer-sub').textContent = 'race ended';
-    log(`Race ended · White: ${state.upper_taps} · Purple: ${state.lower_taps}`, 'warn');
-  }
-});
-
-function updateScores(u, l) {
-  const total = u + l || 1;
+socket.on('state', (s) => {
+  const u = s.upper_taps||0, m = s.lower_taps||0, tpl = s.taps_per_lap||50;
+  const total = u+m||1;
   document.getElementById('d-upper').textContent = u;
-  document.getElementById('d-lower').textContent = l;
-  document.getElementById('bw').style.width = Math.round(u/total*100) + '%';
-  document.getElementById('bp').style.width = Math.round(l/total*100) + '%';
-  document.getElementById('pw').textContent = Math.round(u/total*100) + '%';
-  document.getElementById('pp').textContent = Math.round(l/total*100) + '%';
-  document.getElementById('d-total').textContent = u + l;
-  document.getElementById('d-leader').textContent = u > l ? 'WHITE ↑' : l > u ? 'PURPLE ↑' : 'TIED';
-  document.getElementById('d-margin').textContent = Math.abs(u - l);
-}
+  document.getElementById('d-lower').textContent = m;
+  document.getElementById('p-upper').textContent = (s.upper_players||0) + ' players';
+  document.getElementById('p-lower').textContent = (s.lower_players||0) + ' players';
+  document.getElementById('bw').style.width = Math.round(u/total*100)+'%';
+  document.getElementById('bm').style.width = Math.round(m/total*100)+'%';
+  document.getElementById('pw').textContent = Math.round(u/total*100)+'%';
+  document.getElementById('pm').textContent = Math.round(m/total*100)+'%';
+  document.getElementById('d-total').textContent = u+m;
+  document.getElementById('d-leader').textContent = u>m?'WHITE ↑':m>u?'MAROON ↑':'TIED';
+  document.getElementById('d-margin').textContent = Math.abs(u-m);
+  document.getElementById('d-players').textContent = (s.upper_players||0)+(s.lower_players||0);
+  document.getElementById('wlaps').textContent = 'W: Lap '+ Math.min(Math.floor(u/tpl)+1,3);
+  document.getElementById('mlaps').textContent = 'M: Lap '+ Math.min(Math.floor(m/tpl)+1,3);
 
-function setUIActive(active) {
+  if (s.active && !gameActive) { gameActive=true; setUI(true); const el=(Date.now()-s.started_at)/1000; startLocalTimer(Math.round(s.duration-el)); }
+  if (!s.active && !s.ended && gameActive) { gameActive=false; setUI(false); }
+  if (!s.active && s.ended && gameActive) { gameActive=false; setUI(false); clearInterval(timerInt); document.getElementById('d-timer-sub').textContent='race ended'; log(`Ended · White:${u} Maroon:${m}`,'warn'); }
+});
+
+function setUI(active) {
   document.getElementById('btn-start').disabled = active;
   document.getElementById('btn-stop').disabled = !active;
-  document.getElementById('pill').className = 'pill ' + (active ? 'live' : 'idle');
-  document.getElementById('pill-txt').textContent = active ? 'LIVE' : 'IDLE';
-  document.getElementById('dur-row').style.opacity = active ? '0.3' : '1';
-  document.getElementById('dur-row').style.pointerEvents = active ? 'none' : 'auto';
+  document.getElementById('pill').className = 'pill '+(active?'live':'idle');
+  document.getElementById('pill-txt').textContent = active?'LIVE':'IDLE';
 }
-
-function startLocalTimer(remaining) {
-  clearInterval(timerInterval);
-  let r = remaining;
+function startLocalTimer(r) {
+  clearInterval(timerInt);
   document.getElementById('d-timer').textContent = r;
   document.getElementById('d-timer-sub').textContent = 'seconds remaining';
-  document.getElementById('d-timer').style.color = '';
-  timerInterval = setInterval(() => {
-    r--;
-    document.getElementById('d-timer').textContent = Math.max(0, r);
-    if (r <= 10) document.getElementById('d-timer').style.color = '#E74C3C';
-    if (r <= 0) clearInterval(timerInterval);
-  }, 1000);
+  document.getElementById('d-timer').className = 'timer-big';
+  timerInt = setInterval(() => {
+    r--; 
+    document.getElementById('d-timer').textContent = Math.max(0,r);
+    if (r<=10) document.getElementById('d-timer').className='timer-big hot';
+    if (r<=0) clearInterval(timerInt);
+  },1000);
 }
-
-function setDur(s, btn) {
-  duration = s;
-  document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  log(`Duration set to ${s}s`);
-}
-
-function startGame() {
-  socket.emit('director:start', { duration });
-  log(`Starting race · ${duration}s`, 'info');
-}
-
-function stopGame() {
-  socket.emit('director:stop');
-  clearInterval(timerInterval);
-  log('Race stopped manually', 'warn');
-}
-
-function resetGame() {
-  socket.emit('director:reset');
-  clearInterval(timerInterval);
-  document.getElementById('d-timer').textContent = '—';
-  document.getElementById('d-timer').style.color = '';
-  document.getElementById('d-timer-sub').textContent = 'not started';
-  log('Game reset', 'info');
-}
+function setDur(s,btn) { duration=s; document.querySelectorAll('.cfg-btn').forEach(b=>{ if(['30s','60s','90s','2 min'].includes(b.textContent)) b.classList.remove('on'); }); btn.classList.add('on'); log(`Duration → ${s}s`); }
+function setTpl(n,btn) { tapsPerLap=n; document.querySelectorAll('.cfg-btn').forEach(b=>{ if(['25','50','75','100'].includes(b.textContent)) b.classList.remove('on'); }); btn.classList.add('on'); log(`Taps/lap → ${n}`); }
+function startGame() { socket.emit('director:start',{duration,taps_per_lap:tapsPerLap}); log(`Race started · ${duration}s · ${tapsPerLap} taps/lap`,'info'); }
+function stopGame() { socket.emit('director:stop'); clearInterval(timerInt); log('Race stopped manually','warn'); }
+function resetGame() { socket.emit('director:reset'); clearInterval(timerInt); document.getElementById('d-timer').textContent='—'; document.getElementById('d-timer').className='timer-big'; document.getElementById('d-timer-sub').textContent='not started'; log('Reset','info'); }
 </script>
 </body>
 </html>
